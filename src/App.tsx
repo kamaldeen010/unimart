@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Login from './pages/Login';
 import CompleteProfile from './pages/CompleteProfile';
+import UpdatePassword from './pages/UpdatePassword';
 import VendorDashboard from './pages/VendorDashboard';
 import AdminPortal from './pages/AdminPortal';
 
@@ -20,6 +21,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
               <Route path="/complete-profile" element={<RequireAuth><CompleteProfile /></RequireAuth>} />
               <Route path="/dashboard" element={<RequireAuth><VendorDashboard /></RequireAuth>} />
               <Route path="/admin" element={<RequireAdmin><AdminPortal /></RequireAdmin>} />

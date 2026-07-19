@@ -5,8 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatNaira } from '../lib/format';
 
-const CATEGORIES = ['Electronics', 'Fashion', 'Books', 'Food', 'Services', 'Other'];
+const CATEGORIES = ['Electronics', 'Fashion', 'Jewelry', 'Books'];
 const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
+
+const CATEGORY_PLACEHOLDERS: Record<string, { title: string; description: string; specKey: string; specValue: string }> = {
+  Electronics: { title: 'e.g. iPhone 12 Pro Max', description: 'Describe condition, specs, accessories included, battery health, location…', specKey: 'e.g. RAM', specValue: 'e.g. 8GB' },
+  Fashion: { title: 'e.g. Vintage Leather Jacket', description: 'Describe condition, fit, material, brand, location…', specKey: 'e.g. Size', specValue: 'e.g. XL' },
+  Jewelry: { title: 'e.g. 18k Gold Cuban Link Chain', description: 'Describe condition, material, weight, authenticity, location…', specKey: 'e.g. Material', specValue: 'e.g. 18k Gold' },
+  Books: { title: 'e.g. Calculus: Early Transcendentals', description: 'Describe condition, edition, highlights/notes, location…', specKey: 'e.g. Author', specValue: 'e.g. Chinua Achebe' },
+};
+
+function placeholdersFor(category: string) {
+  return CATEGORY_PLACEHOLDERS[category] ?? CATEGORY_PLACEHOLDERS.Electronics;
+}
 
 export default function PostItemForm({ balance, onPosted }: { balance: number; onPosted: () => void }) {
   const { profile } = useAuth();
@@ -112,7 +123,7 @@ export default function PostItemForm({ balance, onPosted }: { balance: number; o
       <Section title="General Information" subtitle="Basic details about your item">
         <div className="space-y-4">
           <Field label="Title">
-            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. iPhone 12 Pro Max" className="inp pl-3" />
+            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={placeholdersFor(form.category).title} className="inp pl-3" />
           </Field>
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Category">
@@ -127,7 +138,7 @@ export default function PostItemForm({ balance, onPosted }: { balance: number; o
             </Field>
           </div>
           <Field label="Description">
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} placeholder="Describe condition, specs, location, what's included…" className="inp pl-3 resize-none" />
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} placeholder={placeholdersFor(form.category).description} className="inp pl-3 resize-none" />
           </Field>
         </div>
       </Section>
@@ -189,8 +200,8 @@ export default function PostItemForm({ balance, onPosted }: { balance: number; o
         <div className="space-y-2">
           {specRows.map((r, i) => (
             <div key={i} className="flex gap-2">
-              <input value={r.k} onChange={(e) => setSpecRows(specRows.map((x, j) => j === i ? { ...x, k: e.target.value } : x))} placeholder="Spec name (e.g. RAM)" className="inp pl-3 flex-1" />
-              <input value={r.v} onChange={(e) => setSpecRows(specRows.map((x, j) => j === i ? { ...x, v: e.target.value } : x))} placeholder="Value (e.g. 8GB)" className="inp pl-3 flex-1" />
+              <input value={r.k} onChange={(e) => setSpecRows(specRows.map((x, j) => j === i ? { ...x, k: e.target.value } : x))} placeholder={placeholdersFor(form.category).specKey} className="inp pl-3 flex-1" />
+              <input value={r.v} onChange={(e) => setSpecRows(specRows.map((x, j) => j === i ? { ...x, v: e.target.value } : x))} placeholder={placeholdersFor(form.category).specValue} className="inp pl-3 flex-1" />
               {specRows.length > 1 && (
                 <button type="button" onClick={() => setSpecRows(specRows.filter((_, j) => j !== i))} className="px-2 text-slate-400 hover:text-rose-500">
                   <X className="h-4 w-4" />

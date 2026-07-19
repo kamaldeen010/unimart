@@ -5,7 +5,7 @@ import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import type { Product } from '../types';
 
-const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Books', 'Food', 'Services', 'Other'];
+const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Jewelry', 'Books'];
 
 type ProductWithVendor = Product & { vendor?: { store_name?: string; phone?: string; full_name?: string } };
 

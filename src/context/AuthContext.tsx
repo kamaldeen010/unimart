@@ -18,8 +18,11 @@ type AuthState = {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  sendOtp: (email: string) => Promise<{ error: string | null }>;
-  verifyOtp: (email: string, token: string) => Promise<{ error: string | null; isNew: boolean }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  verifyRecoveryOtp: (email: string, token: string) => Promise<{ error: string | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
   completeProfile: (fullName: string, storeName: string, phone: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -97,45 +100,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sendOtp: AuthState['sendOtp'] = async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({
+  const signUp: AuthState['signUp'] = async (email, password) => {
+    const { data, error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password });
+    if (error) return { error: error.message };
+    const uid = data.user?.id;
+    if (!uid) return { error: 'Sign-up failed. Please try again.' };
+    // Create a minimal profile row; user completes details on the onboarding screen
+    const { error: insErr } = await supabase.from('profiles').insert({
+      user_id: uid,
       email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: true },
+      full_name: '',
+      store_name: '',
+      phone: '',
+      role: 'vendor',
+      wallet_balance: 0,
+    });
+    if (insErr) return { error: insErr.message };
+    const fresh = await fetchProfile(uid);
+    setProfile(fresh);
+    return { error: null };
+  };
+
+  const signIn: AuthState['signIn'] = async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const resetPassword: AuthState['resetPassword'] = async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
+  const verifyRecoveryOtp: AuthState['verifyRecoveryOtp'] = async (email, token) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: token.trim(),
+      type: 'recovery',
     });
     if (error) return { error: error.message };
     return { error: null };
   };
 
-  const verifyOtp: AuthState['verifyOtp'] = async (email, token) => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token,
-      type: 'email',
-    });
-    if (error) return { error: error.message, isNew: false };
-    const uid = data.user?.id;
-    if (!uid) return { error: 'Verification failed. Please try again.', isNew: false };
-    // Check if profile exists
-    const p = await fetchProfile(uid);
-    const isNew = !p;
-    if (isNew) {
-      // Create a minimal profile row; user will complete it on the onboarding screen
-      const { error: insErr } = await supabase.from('profiles').insert({
-        user_id: uid,
-        email: email.trim().toLowerCase(),
-        full_name: '',
-        store_name: '',
-        phone: '',
-        role: 'vendor',
-        wallet_balance: 0,
-      });
-      if (insErr) return { error: insErr.message, isNew: false };
-      const fresh = await fetchProfile(uid);
-      setProfile(fresh);
-    } else {
-      setProfile(p);
-    }
-    return { error: null, isNew };
+  const updatePassword: AuthState['updatePassword'] = async (newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { error: error.message };
+    return { error: null };
   };
 
   const completeProfile: AuthState['completeProfile'] = async (fullName, storeName, phone) => {
@@ -157,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, sendOtp, verifyOtp, completeProfile, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, resetPassword, verifyRecoveryOtp, updatePassword, completeProfile, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
